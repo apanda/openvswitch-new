@@ -273,6 +273,7 @@ struct nx_ddc_port_direction {
     ovs_be16 port;
     ovs_be16 direction;
 };
+OFP_ASSERT(sizeof(struct nx_ddc_port_direction) == 4);
 
 #define MAX_DAG_PORTS 256;
 

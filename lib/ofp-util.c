@@ -383,7 +383,7 @@ ofputil_decode_vendor(const struct ofp_header *oh, size_t length,
 
         { OFPUTIL_NXT_DAG_INFORMATION, OFP10_VERSION,
           NXT_DAG_INFORMATION, "NXT_DAG_INFORMATION",
-          sizeof(struct nx_ddc_dag_information), 0 },
+          sizeof(struct nx_ddc_dag_information), 4 },
 
         { OFPUTIL_NXT_SET_PORT_STATE, OFP10_VERSION,
           NXT_SET_PORT_STATE,  "NXT_SET_PORT_STATE",
