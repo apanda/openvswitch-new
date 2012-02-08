@@ -108,7 +108,12 @@ enum nicira_type {
 
     /* Alternative PACKET_IN message formats. */
     NXT_SET_PACKET_IN_FORMAT = 16, /* Set Packet In format. */
-    NXT_PACKET_IN = 17             /* Nicira Packet In. */
+    NXT_PACKET_IN = 17,             /* Nicira Packet In. */
+
+    /* DDC specific messages, we should find a way to move off of
+     * Nicira's vendor type at some point, this is getting ridiculous */
+   NXT_DAG_INFORMATION = 18, /* Provide DAG information, in particular, port directions */
+   NXT_SET_PORT_STATE = 19
 };
 
 /* Header for Nicira vendor stats request and reply messages. */
@@ -252,6 +257,51 @@ struct nx_packet_in {
     /* uint8_t data[0]; */         /* Ethernet frame. */
 };
 OFP_ASSERT(sizeof(struct nx_packet_in) == 40);
+
+/* NXT_DAG_INFORMATION 
+ *
+ * This is a DDC specific openflow extension that allows the controller to set
+ * initial port direction. We use the Nicira format for ease of use
+ */
+enum ddc_port_direction {
+    DDC_PORT_IN = 0,
+    DDC_PORT_OUT = 1,
+    DDC_PORT_NONE = 2
+};
+
+struct nx_ddc_port_direction {
+    ovs_be16 port;
+    ovs_be16 direction;
+};
+
+#define MAX_DAG_PORTS 256;
+
+struct nx_ddc_dag_information {
+    struct nicira_header nxh;
+    ovs_be16 version;
+    ovs_be16 dpid;
+    ovs_be16 own_dpid;
+    ovs_be16 num_directions;
+};
+OFP_ASSERT(sizeof(struct nx_ddc_dag_information) == 24);
+
+/* NXT_SET_PORT_STATE
+ *
+ * This is a DDC specific openflow extension that allows the controller to set
+ * port state, useful for automated testing. We use the Nicira format for ease of use
+ */
+enum ddc_port_state {
+    DDC_PORT_UP = 1,
+    DDC_PORT_DOWN = 0 
+};
+
+struct nx_ddc_set_port_state {
+    struct nicira_header nxh;
+    ovs_be16 port;
+    uint8_t state;
+    uint8_t pad[5];
+};
+OFP_ASSERT(sizeof(struct nx_ddc_set_port_state) == 24);
 
 /* Configures the "role" of the sending controller.  The default role is:
  *

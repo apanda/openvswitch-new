@@ -24,7 +24,7 @@
 %endif
 
 %if %{?kernel_name:0}%{!?kernel_name:1}
-%define kernel %(rpm -qa 'kernel*xen-devel')
+%define kernel %(rpm -qa 'kernel*xen-devel' | head -1)
 %define kernel_name %(rpm -q --queryformat "%%{Name}" %{kernel} | sed 's/-devel//' | sed 's/kernel-//')
 %define kernel_version %(rpm -q --queryformat "%%{Version}-%%{Release}" %{kernel})
 %define kernel_flavor xen
