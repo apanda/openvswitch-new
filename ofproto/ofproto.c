@@ -3195,6 +3195,10 @@ handle_openflow__(struct ofconn *ofconn, const struct ofpbuf *msg)
 
     case OFPUTIL_NXT_SET_PACKET_IN_FORMAT:
         return handle_nxt_set_packet_in_format(ofconn, oh);
+    
+    case OFPUTIL_NXT_DAG_INFORMATION:
+    case OFPUTIL_NXT_SET_PORT_STATE:
+        return OFPROTO_POSTPONE;
 
     case OFPUTIL_NXT_FLOW_MOD:
         return handle_flow_mod(ofconn, oh);

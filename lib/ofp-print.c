@@ -1348,6 +1348,10 @@ ofp_to_string__(const struct ofp_header *oh,
         ofp_print_packet_in(string, msg, verbosity);
         break;
 
+    case OFPUTIL_NXT_DAG_INFORMATION:
+    case OFPUTIL_NXT_SET_PORT_STATE:
+        break;
+
     case OFPUTIL_OFPT_FLOW_REMOVED:
     case OFPUTIL_NXT_FLOW_REMOVED:
         ofp_print_flow_removed(string, msg);
