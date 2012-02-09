@@ -6300,6 +6300,18 @@ vsp_add(struct ofport_dpif *port, uint16_t realdev_ofp_port, int vid)
     }
 }
 
+/* DDC functions */
+static int
+set_port_state(struct ofproto *ofproto_, uint16_t port, enum ddc_port_state state)
+{
+    struct ofproto_dpif *ofproto = ofproto_dpif_cast(ofproto_);
+    if (port >= ofproto->max_ports) {
+        // Reuse the bad port error message
+        return OFPERR_OFPPMFC_BAD_PORT;
+    } 
+    return dpif_ddc_set_port_state(ofproto->dpif, port, (uint8_t)state);
+}
+
 const struct ofproto_class ofproto_dpif_class = {
     enumerate_types,
     enumerate_names,
@@ -6360,4 +6372,5 @@ const struct ofproto_class ofproto_dpif_class = {
     forward_bpdu_changed,
     set_mac_idle_time,
     set_realdev,
+    set_port_state, 
 };

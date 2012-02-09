@@ -1273,3 +1273,11 @@ log_execute_message(struct dpif *dpif, const struct dpif_execute *execute,
         free(packet);
     }
 }
+
+int
+dpif_ddc_set_port_state(const struct dpif *dpif OVS_UNUSED, 
+                        uint16_t port OVS_UNUSED, 
+                        uint8_t state OVS_UNUSED)
+{
+    return 0;
+}

@@ -3127,6 +3127,24 @@ handle_nxt_set_packet_in_format(struct ofconn *ofconn,
 }
 
 static enum ofperr
+handle_nxt_set_port_state(struct ofconn *ofconn,
+                          const struct ofp_header *oh)
+{
+    struct ofproto *p = ofconn_get_ofproto(ofconn);
+    const struct nx_ddc_set_port_state* msg;
+    OVS_UNUSED uint16_t port;
+    OVS_UNUSED enum ddc_port_state state;
+    msg = (const struct nx_ddc_set_port_state *) oh;
+    port = ntohs(msg->port);
+    state = (enum ddc_port_state) msg->state;
+    if (! p->ofproto_class->set_port_state) {
+        return ENOTSUP;
+    }
+
+    return 0;
+}
+
+static enum ofperr
 handle_barrier_request(struct ofconn *ofconn, const struct ofp_header *oh)
 {
     struct ofp_header *ob;
@@ -3197,8 +3215,10 @@ handle_openflow__(struct ofconn *ofconn, const struct ofpbuf *msg)
         return handle_nxt_set_packet_in_format(ofconn, oh);
     
     case OFPUTIL_NXT_DAG_INFORMATION:
+        return 0;
+    
     case OFPUTIL_NXT_SET_PORT_STATE:
-        return OFPROTO_POSTPONE;
+        return handle_nxt_set_port_state(ofconn, oh);
 
     case OFPUTIL_NXT_FLOW_MOD:
         return handle_flow_mod(ofconn, oh);

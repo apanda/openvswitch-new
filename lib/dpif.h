@@ -252,6 +252,11 @@ void dpif_get_netflow_ids(const struct dpif *,
 int dpif_queue_to_priority(const struct dpif *, uint32_t queue_id,
                            uint32_t *priority);
 
+/* DDC functions */
+int dpif_ddc_set_port_state(const struct dpif *,
+                            uint16_t port,
+                            uint8_t state);
+
 #ifdef  __cplusplus
 }
 #endif

@@ -1129,6 +1129,13 @@ struct ofproto_class {
      * it. */
     int (*set_realdev)(struct ofport *ofport,
                        uint16_t realdev_ofp_port, int vid);
+   
+   /* DDC functions. These are used to either test DDC, or for setting up the initial
+    * static data needed by DDC
+    */
+   int (*set_port_state)(struct ofproto *ofproto,
+                          uint16_t port,
+                          enum ddc_port_state state);
 };
 
 extern const struct ofproto_class ofproto_dpif_class;
