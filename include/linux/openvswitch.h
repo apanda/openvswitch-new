@@ -485,4 +485,28 @@ enum ovs_action_attr {
 
 #define OVS_ACTION_ATTR_MAX (__OVS_ACTION_ATTR_MAX - 1)
 
+#define OVS_DDC_PORT_STATE_FAMILY "ovs_ddc_port"
+#define OVS_DDC_PORT_STATE_MCGROUP "ovs_ddc_port"
+#define OVS_DDC_PORT_STATE_VERSION 0x1
+
+enum ovs_ddc_port_state_cmd {
+    OVS_DDC_PORT_STATE_CMD_UNSPEC,
+    OVS_DDC_PORT_STATE_CMD_SET,
+};
+
+/**
+ * A simple structure with port and state
+ */
+struct ovs_ddc_port_state {
+    __be16 port;
+    __u8   state;
+};
+
+enum ovs_ddc_port_state_attr {
+    OVS_DDC_PORT_STATE_ATTR_UNSPEC,
+    OVS_DDC_PORT_STATE_ATTR_PORT,
+    OVS_DDC_PORT_STATE_ATTR_STATE,
+    __OVS_DDC_PORT_STATE_ATTR_MAX
+};
+#define OVS_DDC_PORT_STATE_ATTR_MAX (__OVS_DDC_PORT_STATE_ATTR_MAX - 1)
 #endif /* _LINUX_OPENVSWITCH_H */

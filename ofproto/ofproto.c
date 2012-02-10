@@ -3140,6 +3140,7 @@ handle_nxt_set_port_state(struct ofconn *ofconn,
     if (! p->ofproto_class->set_port_state) {
         return ENOTSUP;
     }
+    p->ofproto_class->set_port_state(p, port, state);
 
     return 0;
 }

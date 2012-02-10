@@ -161,6 +161,7 @@ static int ovs_datapath_family;
 static int ovs_vport_family;
 static int ovs_flow_family;
 static int ovs_packet_family;
+static int ovs_ddc_port_state_family;
 
 /* Generic Netlink socket. */
 static struct nl_sock *genl_sock;
@@ -1165,6 +1166,31 @@ dpif_linux_recv_purge(struct dpif *dpif_)
     }
 }
 
+static void
+dpif_linux_set_port_state_transact(int dp_ifindex, uint16_t port, uint8_t state)
+{
+    struct ofpbuf *request_buf;
+    struct ovs_header *ovs_header;
+    request_buf = ofpbuf_new(1024); 
+    nl_msg_put_genlmsghdr(request_buf, 0, ovs_ddc_port_state_family, NLM_F_REQUEST,
+                            OVS_DDC_PORT_STATE_CMD_SET, OVS_DDC_PORT_STATE_VERSION);
+    ovs_header = ofpbuf_put_uninit(request_buf, sizeof *ovs_header);
+    ovs_header->dp_ifindex = dp_ifindex;
+
+    nl_msg_put_u16(request_buf, OVS_DDC_PORT_STATE_ATTR_PORT, port);
+    nl_msg_put_u8(request_buf, OVS_DDC_PORT_STATE_ATTR_STATE, state);
+    nl_sock_transact(genl_sock, request_buf, NULL);
+    ofpbuf_delete(request_buf);
+}
+
+static void
+dpif_linux_set_port_state(struct dpif *dpif_, uint16_t port, uint8_t state)
+{
+    struct dpif_linux *dpif = dpif_linux_cast(dpif_);
+    VLOG_WARN("About to send a port send message");
+    dpif_linux_set_port_state_transact(dpif->dp_ifindex, port, state);
+}
+
 const struct dpif_class dpif_linux_class = {
     "system",
     dpif_linux_enumerate,
@@ -1199,6 +1225,7 @@ const struct dpif_class dpif_linux_class = {
     dpif_linux_recv,
     dpif_linux_recv_wait,
     dpif_linux_recv_purge,
+    dpif_linux_set_port_state,
 };
 
 static int
@@ -1225,6 +1252,10 @@ dpif_linux_init(void)
         if (!error) {
             error = nl_lookup_genl_family(OVS_PACKET_FAMILY,
                                           &ovs_packet_family);
+        }
+        if (!error) {
+            error = nl_lookup_genl_family(OVS_DDC_PORT_STATE_FAMILY,
+                                            &ovs_ddc_port_state_family);
         }
         if (!error) {
             error = nl_sock_create(NETLINK_GENERIC, &genl_sock);

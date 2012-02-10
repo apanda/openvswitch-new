@@ -332,6 +332,10 @@ struct dpif_class {
     /* Throws away any queued upcalls that 'dpif' currently has ready to
      * return. */
     void (*recv_purge)(struct dpif *dpif);
+
+    /* This is a DDC specific enhancement for more automated testing of the
+     * topology. */
+    void (*set_port_state)(struct dpif *dpif, uint16_t port, uint8_t state);
 };
 
 extern const struct dpif_class dpif_linux_class;

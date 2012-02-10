@@ -53,6 +53,7 @@
 #include "timeval.h"
 #include "util.h"
 #include "vlog.h"
+#include "openflow/nicira-ext.h"
 
 VLOG_DEFINE_THIS_MODULE(dpif_netdev);
 
@@ -102,6 +103,7 @@ struct dp_netdev_port {
     struct list node;           /* Element in dp_netdev's 'port_list'. */
     struct netdev *netdev;
     char *type;                 /* Port type as requested by user. */
+    enum ddc_port_state state;
 };
 
 /* A flow in dp_netdev's 'flow_table'. */
@@ -343,6 +345,7 @@ do_add_port(struct dp_netdev *dp, const char *devname, const char *type,
     port->port_no = port_no;
     port->netdev = netdev;
     port->type = xstrdup(type);
+    port->state = DDC_PORT_UP;
 
     error = netdev_get_mtu(netdev, &mtu);
     if (!error) {
@@ -1059,7 +1062,9 @@ dp_netdev_output_port(struct dp_netdev *dp, struct ofpbuf *packet,
 {
     struct dp_netdev_port *p = dp->ports[out_port];
     if (p) {
-        netdev_send(p->netdev, packet);
+        if (p->state != DDC_PORT_DOWN) {
+            netdev_send(p->netdev, packet);
+        }
     }
 }
 
@@ -1240,6 +1245,20 @@ dp_netdev_execute_actions(struct dp_netdev *dp,
     }
 }
 
+static void
+dpif_netdev_set_port_state(const struct dpif *dpif, uint16_t port_, uint8_t state)
+{
+    struct dp_netdev *dp = get_dp_netdev(dpif);
+    struct dp_netdev_port *port = NULL;
+    get_port_by_number(dp, port_, &port);
+    
+    if (!port) {
+        return;
+    }
+
+    port->state = (enum ddc_port_state)state;
+}
+
 const struct dpif_class dpif_netdev_class = {
     "netdev",
     NULL,                       /* enumerate */
@@ -1274,6 +1293,7 @@ const struct dpif_class dpif_netdev_class = {
     dpif_netdev_recv,
     dpif_netdev_recv_wait,
     dpif_netdev_recv_purge,
+    NULL,                      /* set port state */
 };
 
 static void

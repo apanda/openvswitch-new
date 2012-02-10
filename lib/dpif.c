@@ -56,6 +56,7 @@ COVERAGE_DEFINE(dpif_flow_query_list);
 COVERAGE_DEFINE(dpif_flow_query_list_n);
 COVERAGE_DEFINE(dpif_execute);
 COVERAGE_DEFINE(dpif_purge);
+COVERAGE_DEFINE(dpif_ddc_set_port_state);
 
 static const struct dpif_class *base_dpif_classes[] = {
 #ifdef HAVE_NETLINK
@@ -1275,9 +1276,14 @@ log_execute_message(struct dpif *dpif, const struct dpif_execute *execute,
 }
 
 int
-dpif_ddc_set_port_state(const struct dpif *dpif OVS_UNUSED, 
-                        uint16_t port OVS_UNUSED, 
-                        uint8_t state OVS_UNUSED)
+dpif_ddc_set_port_state(const struct dpif *dpif, 
+                        uint16_t port, 
+                        uint8_t state)
 {
+    COVERAGE_INC(dpif_ddc_set_port_state);
+    if (!dpif->dpif_class->set_port_state) {
+        return ENOTSUP;
+    }
+    dpif->dpif_class->set_port_state(dpif, port, state);
     return 0;
 }

@@ -1590,6 +1590,46 @@ static struct genl_ops dp_datapath_genl_ops[] = {
 	},
 };
 
+static const struct nla_policy ddc_port_state_policy [OVS_DDC_PORT_STATE_ATTR_MAX + 1] = {
+    [OVS_DDC_PORT_STATE_ATTR_PORT] = { .type = NLA_U16 },
+    [OVS_DDC_PORT_STATE_ATTR_STATE] = { .type = NLA_U8 },
+};
+
+static struct genl_family dp_ddc_port_state_family = {
+    .id = GENL_ID_GENERATE,
+    .hdrsize = sizeof(struct ovs_header),
+    .name = OVS_DDC_PORT_STATE_FAMILY,
+    .version = OVS_DDC_PORT_STATE_VERSION,
+    .maxattr = OVS_DDC_PORT_STATE_ATTR_MAX,
+    SET_NETNSOK
+};
+
+struct genl_multicast_group ovs_dp_ddc_port_state_multicast_group = {
+    .name = OVS_DDC_PORT_STATE_MCGROUP
+};
+
+static int ovs_ddc_port_state_set(struct sk_buff *skb, struct genl_info *info)
+{
+	struct nlattr **a = info->attrs;
+	struct ovs_header *ovs_header = info->userhdr;
+    if (!a[OVS_DDC_PORT_STATE_ATTR_PORT] || !a[OVS_DDC_PORT_STATE_ATTR_STATE]) {
+        WARN_ON(true);
+    }
+    else {
+        uint16_t port = nla_get_u16(a[OVS_DDC_PORT_STATE_ATTR_PORT]);
+        uint8_t state = nla_get_u8(a[OVS_DDC_PORT_STATE_ATTR_STATE]);
+    }
+    return 0;
+}
+
+static struct genl_ops dp_ddc_port_state_genl_ops[] = {
+	{ .cmd = OVS_DDC_PORT_STATE_CMD_SET,
+	  .flags = GENL_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
+	  .policy = ddc_port_state_policy,
+	  .doit = ovs_ddc_port_state_set
+	},
+};
+
 static const struct nla_policy vport_policy[OVS_VPORT_ATTR_MAX + 1] = {
 #ifdef HAVE_NLA_NUL_STRING
 	[OVS_VPORT_ATTR_NAME] = { .type = NLA_NUL_STRING, .len = IFNAMSIZ - 1 },
@@ -2008,6 +2048,9 @@ static const struct genl_family_and_ops dp_genl_families[] = {
 	{ &dp_packet_genl_family,
 	  dp_packet_genl_ops, ARRAY_SIZE(dp_packet_genl_ops),
 	  NULL },
+    { &dp_ddc_port_state_family,
+      dp_ddc_port_state_genl_ops, ARRAY_SIZE(dp_ddc_port_state_genl_ops),
+      &ovs_dp_ddc_port_state_multicast_group },
 };
 
 static void dp_unregister_genl(int n_families)

@@ -6305,6 +6305,7 @@ static int
 set_port_state(struct ofproto *ofproto_, uint16_t port, enum ddc_port_state state)
 {
     struct ofproto_dpif *ofproto = ofproto_dpif_cast(ofproto_);
+    VLOG_WARN("Calling set_port_state in ofproto-dpif.c");
     if (port >= ofproto->max_ports) {
         // Reuse the bad port error message
         return OFPERR_OFPPMFC_BAD_PORT;
