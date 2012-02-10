@@ -54,6 +54,7 @@ int ovs_vport_get_options(const struct vport *, struct sk_buff *);
 
 int ovs_vport_send(struct vport *, struct sk_buff *);
 
+void ovs_vport_set_state(struct vport *, uint8_t state);
 /* The following definitions are for implementers of vport devices: */
 
 struct vport_percpu_stats {
@@ -90,6 +91,7 @@ struct vport_err_stats {
  * @err_stats: Points to error statistics used and maintained by vport
  * @offset_stats: Added to actual statistics as a sop to compatibility with
  * XAPI for Citrix XenServer.  Deprecated.
+ * @state: A DDC testing enhancement to figure out whether the port is alive or not
  */
 struct vport {
 	struct rcu_head rcu;
@@ -108,6 +110,8 @@ struct vport {
 	spinlock_t stats_lock;
 	struct vport_err_stats err_stats;
 	struct ovs_vport_stats offset_stats;
+    
+    atomic_t state;
 };
 
 #define VPORT_F_REQUIRED	(1 << 0) /* If init fails, module loading fails. */

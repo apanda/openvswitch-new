@@ -29,10 +29,14 @@
 #include <linux/compat.h>
 #include <linux/version.h>
 #include <net/net_namespace.h>
-
 #include "datapath.h"
 #include "vport.h"
 #include "vport-internal_dev.h"
+
+enum {
+    DDC_PORT_UP = 1,
+    DDC_PORT_DOWN = 0
+};
 
 /* List of statically compiled vport implementations.  Don't forget to also
  * add yours to the list at the bottom of vport.h. */
@@ -197,6 +201,7 @@ struct vport *ovs_vport_alloc(int priv_size, const struct vport_ops *ops,
 	 * /sys/class/net/<devname>/brport later, if sysfs is enabled. */
 	vport->kobj.kset = NULL;
 	kobject_init(&vport->kobj, &brport_ktype);
+    atomic_set(&vport->state, DDC_PORT_UP);
 
 	vport->percpu_stats = alloc_percpu(struct vport_percpu_stats);
 	if (!vport->percpu_stats) {
@@ -477,7 +482,11 @@ void ovs_vport_receive(struct vport *vport, struct sk_buff *skb)
  */
 int ovs_vport_send(struct vport *vport, struct sk_buff *skb)
 {
-	int sent = vport->ops->send(vport, skb);
+	int sent = 0;
+    
+    if (atomic_read(&vport->state) != DDC_PORT_DOWN) { 
+        sent = vport->ops->send(vport, skb);
+    }
 
 	if (likely(sent)) {
 		struct vport_percpu_stats *stats;

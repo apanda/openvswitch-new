@@ -1616,8 +1616,33 @@ static int ovs_ddc_port_state_set(struct sk_buff *skb, struct genl_info *info)
         WARN_ON(true);
     }
     else {
-        uint16_t port = nla_get_u16(a[OVS_DDC_PORT_STATE_ATTR_PORT]);
+        uint16_t port_ = nla_get_u16(a[OVS_DDC_PORT_STATE_ATTR_PORT]);
         uint8_t state = nla_get_u8(a[OVS_DDC_PORT_STATE_ATTR_STATE]);
+        struct datapath *dp;
+        struct vport *port;
+        int error;
+
+        if (port_ >= DP_MAX_PORTS) {
+            return -ENODEV;
+        }
+
+        rcu_read_lock();
+        dp = get_dp(sock_net(skb->sk), ovs_header->dp_ifindex);
+        error = -ENODEV;
+        if (!dp) {
+            goto error;
+        }
+        error = 0;
+        port = rcu_dereference(dp->ports[port_]);
+        error = -ENODEV;
+        if (!port) {
+            goto error;
+        }
+        error = 0;
+        atomic_set(&port->state, state);
+error:
+        rcu_read_unlock();
+        return error;
     }
     return 0;
 }
