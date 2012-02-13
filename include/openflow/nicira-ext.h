@@ -275,8 +275,6 @@ struct nx_ddc_port_direction {
 };
 OFP_ASSERT(sizeof(struct nx_ddc_port_direction) == 4);
 
-#define MAX_DAG_PORTS 256;
-
 struct nx_ddc_dag_information {
     struct nicira_header nxh;
     ovs_be16 version;

@@ -1184,7 +1184,7 @@ dpif_linux_set_port_state_transact(int dp_ifindex, uint16_t port, uint8_t state)
 }
 
 static void
-dpif_linux_set_port_state(struct dpif *dpif_, uint16_t port, uint8_t state)
+dpif_linux_set_port_state(const struct dpif *dpif_, uint16_t port, uint8_t state)
 {
     struct dpif_linux *dpif = dpif_linux_cast(dpif_);
     VLOG_WARN("About to send a port send message");

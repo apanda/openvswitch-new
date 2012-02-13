@@ -383,7 +383,8 @@ ofputil_decode_vendor(const struct ofp_header *oh, size_t length,
 
         { OFPUTIL_NXT_DAG_INFORMATION, OFP10_VERSION,
           NXT_DAG_INFORMATION, "NXT_DAG_INFORMATION",
-          sizeof(struct nx_ddc_dag_information), 4 },
+          sizeof(struct nx_ddc_dag_information), 
+          sizeof(struct nx_ddc_port_direction)},
 
         { OFPUTIL_NXT_SET_PORT_STATE, OFP10_VERSION,
           NXT_SET_PORT_STATE,  "NXT_SET_PORT_STATE",
@@ -1019,6 +1020,57 @@ ofputil_make_flow_mod_table_id(bool flow_mod_table_id)
     nfmti = make_nxmsg(sizeof *nfmti, NXT_FLOW_MOD_TABLE_ID, &msg);
     nfmti->set = flow_mod_table_id;
     return msg;
+}
+
+/* Convert a NXT_DAG_INFORMATION message to a more reasonable format */
+enum ofperr
+ofputil_decode_dag_information(struct ofputil_dag_information *dag,
+                               const struct ofp_header *oh)
+{
+    struct ofpbuf b;
+    struct nx_ddc_dag_information *ndi;
+    struct nx_ddc_port_direction *directions;
+    size_t numdirections = 0;
+    size_t sizeof_directions;
+    memset(dag, 0, sizeof(struct ofputil_dag_information));
+    
+    ofpbuf_use_const(&b, oh, ntohs(oh->length));
+
+    ndi = ofpbuf_pull(&b, sizeof(struct nx_ddc_dag_information));
+    dag->version = ntohs(ndi->version);
+    dag->own_dpid = ntohs(ndi->own_dpid);
+    dag->dpid = ntohs(ndi->dpid);
+    dag->n_directions = ntohs(ndi->num_directions);
+    
+    sizeof_directions = b.size;
+    directions = ofpbuf_pull(&b, sizeof_directions);
+
+    if (directions == NULL && dag->n_directions != 0) {
+        return OFPERR_OFPBRC_BAD_LEN;
+    }
+
+    if (dag->n_directions >= MaxDDCPorts) {
+        return OFPERR_OFPBRC_BAD_LEN;
+    }
+
+    while (sizeof_directions > 0 && numdirections < MaxDDCPorts) {
+        uint16_t port = ntohs(directions->port);
+        uint16_t direction = ntohs(directions->direction);
+        if (direction != DDC_PORT_NONE) {
+            dag->directions[numdirections].port = port;
+            dag->directions[numdirections].direction = direction;
+            numdirections++;
+        }
+
+        sizeof_directions -= sizeof(struct nx_ddc_port_direction);
+        directions = (struct nx_ddc_port_direction *)((uint8_t *)directions + sizeof(struct nx_ddc_port_direction));
+    }
+    
+    if (numdirections != dag->n_directions) {
+        return OFPERR_OFPBRC_BAD_LEN;
+    }
+
+    return 0;
 }
 
 /* Converts an OFPT_FLOW_MOD or NXT_FLOW_MOD message 'oh' into an abstract

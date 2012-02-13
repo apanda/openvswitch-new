@@ -3132,8 +3132,8 @@ handle_nxt_set_port_state(struct ofconn *ofconn,
 {
     struct ofproto *p = ofconn_get_ofproto(ofconn);
     const struct nx_ddc_set_port_state* msg;
-    OVS_UNUSED uint16_t port;
-    OVS_UNUSED enum ddc_port_state state;
+    uint16_t port;
+    enum ddc_port_state state;
     msg = (const struct nx_ddc_set_port_state *) oh;
     port = ntohs(msg->port);
     state = (enum ddc_port_state) msg->state;
@@ -3142,6 +3142,19 @@ handle_nxt_set_port_state(struct ofconn *ofconn,
     }
     p->ofproto_class->set_port_state(p, port, state);
 
+    return 0;
+}
+
+static enum ofperr
+handle_nxt_set_dag_information(struct ofconn *ofconn,
+                               const struct ofp_header *oh)
+{
+    struct ofputil_dag_information dag;
+    enum ofperr error;
+    error = ofputil_decode_dag_information(&dag, oh);
+    if (error) {
+        return error;
+    }
     return 0;
 }
 
@@ -3216,7 +3229,7 @@ handle_openflow__(struct ofconn *ofconn, const struct ofpbuf *msg)
         return handle_nxt_set_packet_in_format(ofconn, oh);
     
     case OFPUTIL_NXT_DAG_INFORMATION:
-        return 0;
+        return handle_nxt_set_dag_information(ofconn, oh);
     
     case OFPUTIL_NXT_SET_PORT_STATE:
         return handle_nxt_set_port_state(ofconn, oh);

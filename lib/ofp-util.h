@@ -154,6 +154,25 @@ struct ofputil_flow_mod {
     size_t n_actions;
 };
 
+/* Interconvertible DAG information */
+struct ofputil_dag_port_direction {
+    uint16_t port;
+    enum ddc_port_direction direction;
+};
+
+enum { MaxDDCPorts = 1024, };
+
+struct ofputil_dag_information {
+    uint16_t version;
+    uint16_t own_dpid;
+    uint16_t dpid;
+    size_t n_directions;
+    struct ofputil_dag_port_direction directions[MaxDDCPorts];
+};
+
+enum ofperr ofputil_decode_dag_information(struct ofputil_dag_information *,
+                                           const struct ofp_header *);
+
 enum ofperr ofputil_decode_flow_mod(struct ofputil_flow_mod *,
                                     const struct ofp_header *,
                                     bool flow_mod_table_id);
