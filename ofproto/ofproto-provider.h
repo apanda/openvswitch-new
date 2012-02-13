@@ -27,6 +27,7 @@
 #include "ofp-errors.h"
 #include "shash.h"
 #include "timeval.h"
+#include "ofp-util.h"
 
 struct ofputil_flow_mod;
 
@@ -1136,6 +1137,9 @@ struct ofproto_class {
    int (*set_port_state)(struct ofproto *ofproto,
                           uint16_t port,
                           enum ddc_port_state state);
+
+   int (*set_dag_information)(struct ofproto *ofproto,
+                              struct ofputil_dag_information *dag);
 };
 
 extern const struct ofproto_class ofproto_dpif_class;

@@ -3149,12 +3149,21 @@ static enum ofperr
 handle_nxt_set_dag_information(struct ofconn *ofconn,
                                const struct ofp_header *oh)
 {
+    struct ofproto *p = ofconn_get_ofproto(ofconn);
     struct ofputil_dag_information dag;
     enum ofperr error;
     error = ofputil_decode_dag_information(&dag, oh);
+    
     if (error) {
         return error;
     }
+    
+    if (! p->ofproto_class->set_dag_information) {
+        return ENOTSUP;
+    }
+
+    p->ofproto_class->set_dag_information(p, &dag);
+
     return 0;
 }
 

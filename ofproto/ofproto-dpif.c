@@ -6305,14 +6305,20 @@ static int
 set_port_state(struct ofproto *ofproto_, uint16_t port, enum ddc_port_state state)
 {
     struct ofproto_dpif *ofproto = ofproto_dpif_cast(ofproto_);
-    VLOG_WARN("Calling set_port_state in ofproto-dpif.c");
     if (port >= ofproto->max_ports) {
         // Reuse the bad port error message
         return OFPERR_OFPPMFC_BAD_PORT;
     } 
     return dpif_ddc_set_port_state(ofproto->dpif, port, (uint8_t)state);
 }
-
+
+static int
+set_dag_information(struct ofproto *ofproto_, struct ofputil_dag_information *dag OVS_UNUSED)
+{
+    struct ofproto_dpif *ofproto OVS_UNUSED = ofproto_dpif_cast(ofproto_);
+    return 0;
+}
+
 const struct ofproto_class ofproto_dpif_class = {
     enumerate_types,
     enumerate_names,
@@ -6374,4 +6380,5 @@ const struct ofproto_class ofproto_dpif_class = {
     set_mac_idle_time,
     set_realdev,
     set_port_state, 
+    set_dag_information,                    /* dag_information */
 };
