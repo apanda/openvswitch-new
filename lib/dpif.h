@@ -25,6 +25,7 @@
 #include "openflow/openflow.h"
 #include "netdev.h"
 #include "util.h"
+#include "ofp-util.h"
 
 #ifdef  __cplusplus
 extern "C" {
@@ -257,6 +258,8 @@ int dpif_ddc_set_port_state(const struct dpif *,
                             uint16_t port,
                             uint8_t state);
 
+int dpif_ddc_set_dag_information(const struct dpif *,
+                                 struct ofputil_dag_information *dag);
 #ifdef  __cplusplus
 }
 #endif

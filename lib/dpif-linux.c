@@ -1226,6 +1226,7 @@ const struct dpif_class dpif_linux_class = {
     dpif_linux_recv_wait,
     dpif_linux_recv_purge,
     dpif_linux_set_port_state,
+    NULL,                     /* set_dag_information */
 };
 
 static int

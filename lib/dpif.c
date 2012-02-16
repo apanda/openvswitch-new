@@ -32,7 +32,6 @@
 #include "odp-util.h"
 #include "ofp-errors.h"
 #include "ofp-print.h"
-#include "ofp-util.h"
 #include "ofpbuf.h"
 #include "packets.h"
 #include "poll-loop.h"
@@ -57,6 +56,7 @@ COVERAGE_DEFINE(dpif_flow_query_list_n);
 COVERAGE_DEFINE(dpif_execute);
 COVERAGE_DEFINE(dpif_purge);
 COVERAGE_DEFINE(dpif_ddc_set_port_state);
+COVERAGE_DEFINE(dpif_ddc_set_dag_information);
 
 static const struct dpif_class *base_dpif_classes[] = {
 #ifdef HAVE_NETLINK
@@ -1285,5 +1285,17 @@ dpif_ddc_set_port_state(const struct dpif *dpif,
         return ENOTSUP;
     }
     dpif->dpif_class->set_port_state(dpif, port, state);
+    return 0;
+}
+
+int
+dpif_ddc_set_dag_information(const struct dpif *dpif,
+                             struct ofputil_dag_information *dag)
+{
+    COVERAGE_INC(dpif_ddc_set_dag_information);
+    if (!dpif->dpif_class->set_dag_information) {
+        return ENOTSUP;
+    }
+    dpif->dpif_class->set_dag_information(dpif, dag);
     return 0;
 }

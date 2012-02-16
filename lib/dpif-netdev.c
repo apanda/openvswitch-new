@@ -1293,7 +1293,8 @@ const struct dpif_class dpif_netdev_class = {
     dpif_netdev_recv,
     dpif_netdev_recv_wait,
     dpif_netdev_recv_purge,
-    NULL,                      /* set port state */
+    dpif_netdev_set_port_state, /* set port state */
+    NULL,                       /* Set DAG information */
 };
 
 static void

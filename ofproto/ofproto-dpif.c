@@ -6313,10 +6313,11 @@ set_port_state(struct ofproto *ofproto_, uint16_t port, enum ddc_port_state stat
 }
 
 static int
-set_dag_information(struct ofproto *ofproto_, struct ofputil_dag_information *dag OVS_UNUSED)
+set_dag_information(struct ofproto *ofproto_, struct ofputil_dag_information *dag)
 {
-    struct ofproto_dpif *ofproto OVS_UNUSED = ofproto_dpif_cast(ofproto_);
-    return 0;
+    struct ofproto_dpif *ofproto = ofproto_dpif_cast(ofproto_);
+
+    return dpif_ddc_set_dag_information(ofproto->dpif, dag);
 }
 
 const struct ofproto_class ofproto_dpif_class = {
