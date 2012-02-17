@@ -509,4 +509,47 @@ enum ovs_ddc_port_state_attr {
     __OVS_DDC_PORT_STATE_ATTR_MAX
 };
 #define OVS_DDC_PORT_STATE_ATTR_MAX (__OVS_DDC_PORT_STATE_ATTR_MAX - 1)
+
+/**
+ * A DAG information structure
+ */
+#define OVS_DDC_DAG_FAMILY "ovs_ddc_dag"
+#define OVS_DDC_DAG_MCGROUP "ovs_ddc_dag"
+#define OVS_DDC_DAG_VERSION 0x1
+
+enum ovs_ddc_dag_information_cmd {
+    OVS_DDC_DAG_INFORMATION_UNSPEC,
+    OVS_DDC_DAG_INFORMATION_SET,
+};
+
+struct ovs_ddc_dag_port_information {
+    __be16 port;
+    __be16 direction;
+};
+
+struct ovs_ddc_dag_information {
+     __be16 version;
+     __be16 own_dpid;
+     __be16 dpid;
+     __be16 n_directions;
+     struct ovs_ddc_dag_port_information *directions;
+ };
+
+enum ovs_ddc_dag_information_attr {
+    OVS_DDC_DAG_INFORMATION_ATTR_UNSPEC,
+    OVS_DDC_DAG_INFORMATION_ATTR_VERSION,
+    OVS_DDC_DAG_INFORMATION_ATTR_OWN_DPID,
+    OVS_DDC_DAG_INFORMATION_ATTR_DPID,
+    OVS_DDC_DAG_INFORMATION_ATTR_N_DIRECTIONS,
+    OVS_DDC_DAG_INFORMATION_ATTR_DIRECTIONS,
+    __OVS_DDC_DAG_INFORMATION_ATTR_MAX
+};
+#define OVS_DDC_DAG_INFORMATION_ATTR_MAX (__OVS_DDC_DAG_INFORMATION_ATTR_MAX - 1)
+
+enum ovs_ddc_dag_port_information_attr {
+    OVS_DDC_DAG_PORT_INFORMATION_ATTR_PORT,
+    OVS_DDC_DAG_PORT_INFORMATION_ATTR_DIRECTION,
+    __OVS_DDC_DAG_PORT_INFORMATION_ATTR_MAX
+};
+#define OVS_DDC_DAG_PORT_INFORMATION_ATTR_MAX (__OVS_DDC_DAG_PORT_INFORMATION_ATTR_MAX - 1)
 #endif /* _LINUX_OPENVSWITCH_H */

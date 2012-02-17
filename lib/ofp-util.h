@@ -166,7 +166,7 @@ struct ofputil_dag_information {
     uint16_t version;
     uint16_t own_dpid;
     uint16_t dpid;
-    size_t n_directions;
+    uint16_t n_directions;
     struct ofputil_dag_port_direction directions[MaxDDCPorts];
 };
 

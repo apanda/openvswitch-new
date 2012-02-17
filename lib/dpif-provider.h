@@ -339,7 +339,7 @@ struct dpif_class {
 
     /* Another DDC specific enhancement to push down initial port directions to the
      * switches */
-    void (*set_dag_information)(const struct dpif *dpif);
+    void (*set_dag_information)(const struct dpif *dpif, const struct ofputil_dag_information *dag);
 };
 
 extern const struct dpif_class dpif_linux_class;

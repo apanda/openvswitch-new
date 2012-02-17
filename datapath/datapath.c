@@ -1590,6 +1590,41 @@ static struct genl_ops dp_datapath_genl_ops[] = {
 	},
 };
 
+static struct nla_policy ddc_dag_information_policy [OVS_DDC_DAG_INFORMATION_ATTR_MAX + 1] = {
+    [OVS_DDC_DAG_INFORMATION_ATTR_VERSION] = { .type = NLA_U16 },
+    [OVS_DDC_DAG_INFORMATION_ATTR_OWN_DPID] = { .type = NLA_U16 },
+    [OVS_DDC_DAG_INFORMATION_ATTR_DPID] = { .type = NLA_U16 },
+    [OVS_DDC_DAG_INFORMATION_ATTR_N_DIRECTIONS] = { .type = NLA_U16 },
+    [OVS_DDC_DAG_INFORMATION_ATTR_DIRECTIONS] = { .type = NLA_NESTED }
+};
+
+static struct genl_family dp_ddc_dag_information_family = {
+    .id = GENL_ID_GENERATE,
+    .hdrsize = sizeof(struct ovs_header),
+    .name = OVS_DDC_DAG_FAMILY,
+    .version = OVS_DDC_DAG_VERSION,
+    .maxattr = OVS_DDC_DAG_INFORMATION_ATTR_MAX,
+    SET_NETNSOK
+};
+
+static struct genl_multicast_group dp_ddc_dag_information_multicast_group = {
+    .name = OVS_DDC_DAG_MCGROUP
+};
+
+static int ovs_ddc_dag_information_set(struct sk_buff *skb, struct genl_info *info)
+{
+    return 0;
+}
+
+
+static struct genl_ops dp_ddc_dag_information_genl_ops[] = {
+	{ .cmd = OVS_DDC_DAG_INFORMATION_SET,
+	  .flags = GENL_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
+	  .policy = ddc_dag_information_policy,
+	  .doit = ovs_ddc_dag_information_set
+	},
+};
+
 static const struct nla_policy ddc_port_state_policy [OVS_DDC_PORT_STATE_ATTR_MAX + 1] = {
     [OVS_DDC_PORT_STATE_ATTR_PORT] = { .type = NLA_U16 },
     [OVS_DDC_PORT_STATE_ATTR_STATE] = { .type = NLA_U8 },
@@ -2076,6 +2111,9 @@ static const struct genl_family_and_ops dp_genl_families[] = {
     { &dp_ddc_port_state_family,
       dp_ddc_port_state_genl_ops, ARRAY_SIZE(dp_ddc_port_state_genl_ops),
       &ovs_dp_ddc_port_state_multicast_group },
+    { &dp_ddc_dag_information_family,
+      dp_ddc_dag_information_genl_ops, ARRAY_SIZE(dp_ddc_dag_information_genl_ops),
+      &ovs_dp_ddc_port_state_multicast_group }
 };
 
 static void dp_unregister_genl(int n_families)

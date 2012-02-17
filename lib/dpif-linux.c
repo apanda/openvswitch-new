@@ -1191,6 +1191,13 @@ dpif_linux_set_port_state(const struct dpif *dpif_, uint16_t port, uint8_t state
     dpif_linux_set_port_state_transact(dpif->dp_ifindex, port, state);
 }
 
+static void
+dpif_linux_set_dag_information(const struct dpif *dpif_, const struct ofputil_dag_information *dag)
+{
+    struct dpif_linux *dpif = dpif_linux_cast(dpif_);
+    VLOG_WARN("set dag information");
+}
+
 const struct dpif_class dpif_linux_class = {
     "system",
     dpif_linux_enumerate,
@@ -1226,7 +1233,7 @@ const struct dpif_class dpif_linux_class = {
     dpif_linux_recv_wait,
     dpif_linux_recv_purge,
     dpif_linux_set_port_state,
-    NULL,                     /* set_dag_information */
+    dpif_linux_set_dag_information,                     /* set_dag_information */
 };
 
 static int
