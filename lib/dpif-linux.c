@@ -162,6 +162,7 @@ static int ovs_vport_family;
 static int ovs_flow_family;
 static int ovs_packet_family;
 static int ovs_ddc_port_state_family;
+static int ovs_ddc_dag_family;
 
 /* Generic Netlink socket. */
 static struct nl_sock *genl_sock;
@@ -1192,10 +1193,43 @@ dpif_linux_set_port_state(const struct dpif *dpif_, uint16_t port, uint8_t state
 }
 
 static void
+dpif_linux_set_dag_information_transact(int dp_ifindex, const struct ofputil_dag_information *dag)
+{
+    struct ofpbuf *request_buf;
+    struct ovs_header *ovs_header;
+    size_t array_offset = 0;
+    size_t struct_offset = 0;
+    size_t struct_len = 4*(2 + NLA_HDRLEN) + 2*NLA_HDRLEN + dag->n_directions*(2*NLA_HDRLEN + 2*(2 + NLA_HDRLEN)) + (NLA_HDRLEN + sizeof *ovs_header);
+    uint16_t direction;
+    request_buf = ofpbuf_new(struct_len);
+    VLOG_INFO("DAG information transact");
+    nl_msg_put_genlmsghdr(request_buf, 0, ovs_ddc_dag_family, NLM_F_REQUEST,
+                            OVS_DDC_DAG_INFORMATION_SET, OVS_DDC_DAG_VERSION);
+    ovs_header = ofpbuf_put_uninit(request_buf, sizeof *ovs_header);
+    ovs_header->dp_ifindex = dp_ifindex;
+    nl_msg_put_u16(request_buf, OVS_DDC_DAG_INFORMATION_ATTR_VERSION, dag->version);
+    nl_msg_put_u16(request_buf, OVS_DDC_DAG_INFORMATION_ATTR_OWN_DPID, dag->own_dpid);
+    nl_msg_put_u16(request_buf, OVS_DDC_DAG_INFORMATION_ATTR_DPID, dag->dpid);
+    nl_msg_put_u16(request_buf, OVS_DDC_DAG_INFORMATION_ATTR_N_DIRECTIONS, dag->n_directions);
+    
+    array_offset = nl_msg_start_nested(request_buf, OVS_DDC_DAG_INFORMATION_ATTR_DIRECTIONS);
+    for (direction = 0; direction < dag->n_directions; direction++) {
+        struct_offset = nl_msg_start_nested(request_buf, OVS_DDC_DAG_PORT_INFORMATION_ATTR_STRUCT);
+        nl_msg_put_u16(request_buf ,dag->directions[direction].port, OVS_DDC_DAG_PORT_INFORMATION_ATTR_PORT);
+        nl_msg_put_u16(request_buf, dag->directions[direction].direction, OVS_DDC_DAG_PORT_INFORMATION_ATTR_DIRECTION);
+        nl_msg_end_nested(request_buf, struct_offset);
+    }
+    nl_msg_end_nested(request_buf, array_offset);
+    nl_sock_transact(genl_sock, request_buf, NULL);
+    ofpbuf_delete(request_buf);
+}
+
+static void
 dpif_linux_set_dag_information(const struct dpif *dpif_, const struct ofputil_dag_information *dag)
 {
     struct dpif_linux *dpif = dpif_linux_cast(dpif_);
     VLOG_WARN("set dag information");
+    dpif_linux_set_dag_information_transact(dpif->dp_ifindex, dag);
 }
 
 const struct dpif_class dpif_linux_class = {
@@ -1264,6 +1298,10 @@ dpif_linux_init(void)
         if (!error) {
             error = nl_lookup_genl_family(OVS_DDC_PORT_STATE_FAMILY,
                                             &ovs_ddc_port_state_family);
+        }
+        if (!error) {
+            error = nl_lookup_genl_family(OVS_DDC_DAG_FAMILY,
+                                            &ovs_ddc_dag_family);
         }
         if (!error) {
             error = nl_sock_create(NETLINK_GENERIC, &genl_sock);

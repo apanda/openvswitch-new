@@ -527,12 +527,15 @@ struct ovs_ddc_dag_port_information {
     __be16 direction;
 };
 
+enum {
+    ovs_max_datapaths = 256,
+};
+
 struct ovs_ddc_dag_information {
      __be16 version;
      __be16 own_dpid;
      __be16 dpid;
      __be16 n_directions;
-     struct ovs_ddc_dag_port_information *directions;
  };
 
 enum ovs_ddc_dag_information_attr {
@@ -547,6 +550,7 @@ enum ovs_ddc_dag_information_attr {
 #define OVS_DDC_DAG_INFORMATION_ATTR_MAX (__OVS_DDC_DAG_INFORMATION_ATTR_MAX - 1)
 
 enum ovs_ddc_dag_port_information_attr {
+    OVS_DDC_DAG_PORT_INFORMATION_ATTR_STRUCT,
     OVS_DDC_DAG_PORT_INFORMATION_ATTR_PORT,
     OVS_DDC_DAG_PORT_INFORMATION_ATTR_DIRECTION,
     __OVS_DDC_DAG_PORT_INFORMATION_ATTR_MAX

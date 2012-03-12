@@ -49,6 +49,7 @@
 #include <linux/openvswitch.h>
 #include <linux/rculist.h>
 #include <linux/dmi.h>
+#include <linux/vmalloc.h>
 #include <net/genetlink.h>
 #include <net/net_namespace.h>
 #include <net/netns/generic.h>
@@ -1613,9 +1614,56 @@ static struct genl_multicast_group dp_ddc_dag_information_multicast_group = {
 
 static int ovs_ddc_dag_information_set(struct sk_buff *skb, struct genl_info *info)
 {
+    struct nlattr **a = info->attrs;
+    struct ovs_ddc_dag_information information;
+    uint16_t directions = 0;
+    uint16_t own_dpid;
+    uint16_t foreign_dpid;
+    printk("ovs_ddc_dag_information_set called\n");
+    if (!a[OVS_DDC_DAG_INFORMATION_ATTR_OWN_DPID] || 
+        !a[OVS_DDC_DAG_INFORMATION_ATTR_DPID] ||
+        !a[OVS_DDC_DAG_INFORMATION_ATTR_N_DIRECTIONS]) {
+        printk("Didn't find default attributes\n");
+        WARN_ON(true);
+    }
+    else {
+        int rem;
+        struct nlattr* aloop;
+        uint16_t directions_found = 0;
+        directions = nla_get_u16(a[OVS_DDC_DAG_INFORMATION_ATTR_N_DIRECTIONS]);
+        own_dpid = nla_get_u16(a[OVS_DDC_DAG_INFORMATION_ATTR_OWN_DPID]);
+        foreign_dpid = nla_get_u16(a[OVS_DDC_DAG_INFORMATION_ATTR_DPID]);
+        printk("ovs_ddc_dag_information got %d ports for dpid %d at %d\n", directions,own_dpid,foreign_dpid);
+        information.version = nla_get_u16(a[OVS_DDC_DAG_INFORMATION_ATTR_VERSION]);
+        information.own_dpid = own_dpid;
+        information.dpid = foreign_dpid;
+        information.n_directions = directions;
+        WARN_ON(directions > ovs_max_datapaths);
+        if (directions > ovs_max_datapaths) {
+            printk("Bad number of datapaths\n");
+            return -1;
+        }
+	    nla_for_each_nested(aloop, a[OVS_DDC_DAG_INFORMATION_ATTR_DIRECTIONS], rem) {
+            struct nlattr* innera;
+            int irem;
+            uint16_t port = 0;
+            uint16_t direction = 0;
+            nla_for_each_nested(innera, aloop, irem) {
+                u16 type = nla_type(innera);
+                if (type == OVS_DDC_DAG_PORT_INFORMATION_ATTR_PORT) {
+                    port = nla_get_u16(innera);
+                }
+                else if (type == OVS_DDC_DAG_PORT_INFORMATION_ATTR_DIRECTION) {
+                    direction = nla_get_u16(innera);
+                }
+            }
+            printk("    Direction for port %d is %d\n", port, direction);
+            directions_found++;
+        }
+        printk("ovs_ddc_dag_information actually received %d ports\n", directions_found);
+    }
     return 0;
 }
-
 
 static struct genl_ops dp_ddc_dag_information_genl_ops[] = {
 	{ .cmd = OVS_DDC_DAG_INFORMATION_SET,
@@ -1647,6 +1695,7 @@ static int ovs_ddc_port_state_set(struct sk_buff *skb, struct genl_info *info)
 {
 	struct nlattr **a = info->attrs;
 	struct ovs_header *ovs_header = info->userhdr;
+    printk("Setting port state");
     if (!a[OVS_DDC_PORT_STATE_ATTR_PORT] || !a[OVS_DDC_PORT_STATE_ATTR_STATE]) {
         WARN_ON(true);
     }
@@ -2113,7 +2162,7 @@ static const struct genl_family_and_ops dp_genl_families[] = {
       &ovs_dp_ddc_port_state_multicast_group },
     { &dp_ddc_dag_information_family,
       dp_ddc_dag_information_genl_ops, ARRAY_SIZE(dp_ddc_dag_information_genl_ops),
-      &ovs_dp_ddc_port_state_multicast_group }
+      &dp_ddc_dag_information_multicast_group }
 };
 
 static void dp_unregister_genl(int n_families)

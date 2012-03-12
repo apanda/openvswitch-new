@@ -112,6 +112,9 @@ struct vport {
 	struct ovs_vport_stats offset_stats;
     
     atomic_t state;
+    atomic_t directions[ovs_max_datapaths];
+    atomic_t lseq[ovs_max_datapaths];
+    atomic_t rseq[ovs_max_datapaths];
 };
 
 #define VPORT_F_REQUIRED	(1 << 0) /* If init fails, module loading fails. */
