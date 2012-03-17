@@ -1615,10 +1615,10 @@ static struct genl_multicast_group dp_ddc_dag_information_multicast_group = {
 static int ovs_ddc_dag_information_set(struct sk_buff *skb, struct genl_info *info)
 {
     struct nlattr **a = info->attrs;
-    struct ovs_ddc_dag_information information;
     uint16_t directions = 0;
     uint16_t own_dpid;
     uint16_t foreign_dpid;
+	struct ovs_header *ovs_header = info->userhdr;
     printk("ovs_ddc_dag_information_set called\n");
     if (!a[OVS_DDC_DAG_INFORMATION_ATTR_OWN_DPID] || 
         !a[OVS_DDC_DAG_INFORMATION_ATTR_DPID] ||
@@ -1634,30 +1634,56 @@ static int ovs_ddc_dag_information_set(struct sk_buff *skb, struct genl_info *in
         own_dpid = nla_get_u16(a[OVS_DDC_DAG_INFORMATION_ATTR_OWN_DPID]);
         foreign_dpid = nla_get_u16(a[OVS_DDC_DAG_INFORMATION_ATTR_DPID]);
         printk("ovs_ddc_dag_information got %d ports for dpid %d at %d\n", directions,own_dpid,foreign_dpid);
-        information.version = nla_get_u16(a[OVS_DDC_DAG_INFORMATION_ATTR_VERSION]);
-        information.own_dpid = own_dpid;
-        information.dpid = foreign_dpid;
-        information.n_directions = directions;
         WARN_ON(directions > ovs_max_datapaths);
         if (directions > ovs_max_datapaths) {
             printk("Bad number of datapaths\n");
             return -1;
         }
+        if (foreign_dpid > ovs_max_datapaths) {
+            printk("Bad datapath\n");
+            return -1;
+        }
+        if (own_dpid > ovs_max_datapaths) {
+            printk("Bad dpid\n");
+            return -1;
+        }
+
 	    nla_for_each_nested(aloop, a[OVS_DDC_DAG_INFORMATION_ATTR_DIRECTIONS], rem) {
             struct nlattr* innera;
             int irem;
-            uint16_t port = 0;
+            uint16_t port_ = 0;
             uint16_t direction = 0;
             nla_for_each_nested(innera, aloop, irem) {
                 u16 type = nla_type(innera);
                 if (type == OVS_DDC_DAG_PORT_INFORMATION_ATTR_PORT) {
-                    port = nla_get_u16(innera);
+                    port_ = nla_get_u16(innera);
                 }
                 else if (type == OVS_DDC_DAG_PORT_INFORMATION_ATTR_DIRECTION) {
                     direction = nla_get_u16(innera);
                 }
             }
-            printk("    Direction for port %d is %d\n", port, direction);
+            if (port_ < DP_MAX_PORTS) {
+                struct datapath *dp;
+                struct vport *port;
+                rcu_read_lock();
+                dp = get_dp(sock_net(skb->sk), ovs_header->dp_ifindex);
+                if (!dp) {
+                    goto error;
+                }
+                port = rcu_dereference(dp->ports[port_]);
+                if (!port) {
+                    goto error;
+                }
+                atomic_set(&port->directions[foreign_dpid], direction);
+                atomic_set(&port->lseq[foreign_dpid], 0);
+                atomic_set(&port->rseq[foreign_dpid], 0);
+error:
+                rcu_read_unlock();
+            }
+            else {
+                printk("Bad port number");
+            }
+            printk("    Direction for port %d is %d\n", port_, direction);
             directions_found++;
         }
         printk("ovs_ddc_dag_information actually received %d ports\n", directions_found);
